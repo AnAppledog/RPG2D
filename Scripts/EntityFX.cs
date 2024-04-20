@@ -17,6 +17,7 @@ public class EntityFX : MonoBehaviour
         startMat = sr.material;
     }
     
+    // 受击转变材质 一段时间后再转变回来
     private IEnumerator FlashFX()
     {
         sr.material = hitMat;
