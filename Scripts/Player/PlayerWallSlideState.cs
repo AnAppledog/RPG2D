@@ -35,16 +35,23 @@ public class PlayerWallSlideState : PlayerState
 
         // 到地面退出滑墙状态
         if (player.IsGroundDetected())
+        {
             stateMachine.StateChange(player.IdleState);
+            return;
+        }
+            
         
         // 反方向移动键 退出滑墙状态 并且无法进行二段跳
-        if (xInput != 0 && xInput != player.faceDir) {
+        // 滑到不能再抓墙 也退出滑墙状态
+        if ((xInput != 0 && xInput != player.faceDir) || !player.IsWallDetectedDown()) {
             player.afterJump2 = true;
             stateMachine.StateChange(player.AirState);
+            return;
         }
         
         if (Input.GetKeyDown(KeyCode.Space))
             stateMachine.StateChange(player.WallJumpState);
+        
     }
 
     public override void Exit()

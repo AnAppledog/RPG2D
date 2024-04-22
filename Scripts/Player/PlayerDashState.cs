@@ -46,5 +46,8 @@ public class PlayerDashState : PlayerState
         base.Exit();
 
         player.SetVelocity(0, rb.velocity.y);
+
+        if (player.isDash2)
+            player.isDash2 = false;
     }
 }

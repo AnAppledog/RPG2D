@@ -31,7 +31,7 @@ public class SkeletonAlertState : EnemyState
         // 记录时间
         stateTimer = enemy.AlertTime;
 
-        player = GameObject.Find("Player").transform;
+        player = PlayerManager.instance.player.transform;
     }
 
     public override void Update()

@@ -28,7 +28,8 @@ public class SkeletonKnockState : EnemyState
     {
         base.Exit();
 
-        // 状态结束立刻重置攻击冷却
-        enemy.attackCooldownTimer = -1;
+        // 状态结束立刻适当减少攻击冷却时间
+        if (enemy.attackCooldownTimer > 0.4f)
+            enemy.attackCooldownTimer = 0.4f;
     }
 }

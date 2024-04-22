@@ -6,8 +6,9 @@ using UnityEngine;
 public class Player : Entity
 {      
     public bool isBusy {get; private set;}  // 玩家是否处于忙碌状态
+    public SkillManager skill {get; private set;}   // 技能管理
 
-    #region  Attack
+    #region Attack
     [Header("Attack info")]
     public float comboTime = 0.5f;      // 连击判定时间
     public float comboCheck;
@@ -31,11 +32,9 @@ public class Player : Entity
     [Header("Dash info")]
     public float dashDuration;          // 玩家冲刺的持续时间
     public float dashSpeed;             // 玩家冲刺的速度   
-    public float dashCooldownTime;      // 冲刺冷却时间  
-    private float dashCooldownTimer;    // 冲刺实时冷却时间
     public float dash2CheckTime;        // 二段冲刺冷却时间
-    public float dash2CheckTimer;            // 二段冲刺检测计时器
-    public bool isDash2 {get; private set;}         // 是否为二段冲刺
+    public float dash2CheckTimer;       // 二段冲刺检测计时器
+    public bool isDash2;                // 是否为二段冲刺
     public float dashDir {get; private set;}        // 冲刺方向
     #endregion
 
@@ -79,6 +78,7 @@ public class Player : Entity
     protected override void Start() 
     {   
         base.Start();  
+        skill = SkillManager.instance;          // 获取技能管理组件
         StateMachine.Initialize(IdleState);     // 初始化为闲置状态
     }
 
@@ -102,6 +102,7 @@ public class Player : Entity
     // 用于部分状态（如攻击）动画结束时终止状态
     public void AnimationFinishTrigger() => StateMachine.CurrentState.AnimationFinishTrigger();
 
+    
     // 冲刺检测
     private void DashCheck()
     {      
@@ -109,18 +110,38 @@ public class Player : Entity
         if (IsWallDetectedDown() || StateMachine.CurrentState == AttackState)   
             return;
 
-        // 冲刺冷却以及二段冲刺判定
-        if (dashCooldownTimer >= 0)
-            dashCooldownTimer -= Time.deltaTime;
+        // 二段冲刺判定
         if (dash2CheckTimer >= 0)
             dash2CheckTimer -= Time.deltaTime;
 
-        if (Input.GetKeyDown(KeyCode.LeftShift) && dashCooldownTimer < 0)
+        /* 判断二段冲刺 */
+        if (Input.GetKeyDown(KeyCode.LeftShift) && dash2CheckTimer > 0)
+        {   
+            /*进行二段冲刺*/
+            isDash2 = true;
+            dash2CheckTimer = -1.0f;
+
+            /* 使用冲刺技能 并更新时间*/
+            SkillManager.instance.dash.CanUseSkill();
+
+            /* 获取冲刺方向 如果没输入则为角色朝向 */
+            dashDir = Input.GetAxis("Horizontal");
+            if (dashDir == 0)
+                dashDir = faceDir;
+            else if (dashDir < 0)
+                dashDir = -1;
+            else    
+                dashDir = 1;
+
+            StateMachine.StateChange(DashState);
+
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.LeftShift) && SkillManager.instance.dash.CanUseSkill())
         {   
             /* 进行一段冲刺 */
             isDash2 = false;
-            /* 设置冲刺冷却时间为1.2秒 */
-            dashCooldownTimer = dashCooldownTime;
             
             /* 获取冲刺方向 如果没输入则为角色朝向 */
             dashDir = Input.GetAxis("Horizontal");
@@ -132,26 +153,8 @@ public class Player : Entity
                 dashDir = 1;
 
             StateMachine.StateChange(DashState);
-        }
-        
-        /* 判断二段冲刺 */
-        if (Input.GetKeyDown(KeyCode.LeftShift) && dash2CheckTimer > 0)
-        {   
-            /*进行二段冲刺*/
-            isDash2 = true;
-            /* 设置冲刺冷却时间 */
-            dashCooldownTimer = dashCooldownTime;
 
-            /* 获取冲刺方向 如果没输入则为角色朝向 */
-            dashDir = Input.GetAxis("Horizontal");
-            if (dashDir == 0)
-                dashDir = faceDir;
-            else if (dashDir < 0)
-                dashDir = -1;
-            else    
-                dashDir = 1;
-
-            StateMachine.StateChange(DashState);
+            return;
         }
     }
 
